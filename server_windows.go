@@ -24,9 +24,12 @@ package gnet
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net"
 	"runtime"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	errors2 "github.com/walkon/gnet/errors"
 	"github.com/walkon/gnet/internal/logging"
@@ -250,7 +253,7 @@ func AddTCPConnector(svr *Server, connFd *ConnFd, connIdx interface{}) (c *stdCo
 	)
 
 	if tc, ok = connFd.Fd.(*net.TCPConn); !ok {
-		err = gerrors.New(fmt.Sprintf("connFd.Fd interface {} not net.TCPConn type"))
+		err = errors.New(fmt.Sprintf("connFd.Fd interface {} not net.TCPConn type"))
 		return
 	}
 
