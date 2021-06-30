@@ -25,6 +25,7 @@ package gnet
 
 import (
 	"context"
+	gerrors "errors"
 	"fmt"
 	"runtime"
 	"sync"
