@@ -23,7 +23,7 @@ package goroutine
 import (
 	"time"
 
-	"github.com/walkon/ants/v2"
+	"github.com/panjf2000/ants/v2"
 )
 
 const (
