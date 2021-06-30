@@ -92,6 +92,12 @@ func (s Server) DupFd() (dupFD int, err error) {
 	return
 }
 
+type ConnFd struct {
+	Fd      interface{}
+	NetAddr net.Addr
+	Sa      interface{}
+}
+
 // Conn is a interface of gnet connection.
 type Conn interface {
 	// Context returns a user-defined context.
