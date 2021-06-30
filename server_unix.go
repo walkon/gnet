@@ -25,13 +25,17 @@ package gnet
 
 import (
 	"context"
+	"fmt"
 	"runtime"
 	"sync"
 	"sync/atomic"
+	"time"
 
-	"github.com/panjf2000/gnet/errors"
-	"github.com/panjf2000/gnet/internal/logging"
-	"github.com/panjf2000/gnet/internal/netpoll"
+	"github.com/walkon/gnet/errors"
+	"github.com/walkon/gnet/internal/logging"
+	"github.com/walkon/gnet/internal/netpoll"
+	"github.com/walkon/gnet/internal/socket"
+	"golang.org/x/sys/unix"
 )
 
 type server struct {
@@ -290,4 +294,68 @@ func serve(eventHandler EventHandler, listener *listener, options *Options, prot
 	allServers.Store(protoAddr, svr)
 
 	return nil
+}
+
+func NewTCPConnFd(network, addr string, opts ...Option) (connFd *ConnFd, err error) {
+	options := loadOptions(opts...)
+
+	var sockopts []socket.Option
+	if options.TCPNoDelay == TCPNoDelay {
+		sockopt := socket.Option{SetSockopt: socket.SetNoDelay, Opt: 1}
+		sockopts = append(sockopts, sockopt)
+	}
+	if options.TCPKeepAlive > 0 {
+		sockopt := socket.Option{SetSockopt: socket.SetKeepAlive, Opt: int(options.TCPKeepAlive / time.Second)}
+		sockopts = append(sockopts, sockopt)
+	}
+	if options.SocketRecvBuffer > 0 {
+		sockopt := socket.Option{SetSockopt: socket.SetRecvBuffer, Opt: options.SocketRecvBuffer}
+		sockopts = append(sockopts, sockopt)
+	}
+	if options.SocketSendBuffer > 0 {
+		sockopt := socket.Option{SetSockopt: socket.SetSendBuffer, Opt: options.SocketSendBuffer}
+		sockopts = append(sockopts, sockopt)
+	}
+
+	connFd = &ConnFd{}
+	connFd.Fd, connFd.NetAddr, connFd.Sa, err = socket.TCPConnect(network, addr, sockopts...)
+
+	return
+}
+
+func AddTCPConnector(svr *Server, connFd *ConnFd, connIdx interface{}) (c *conn, err error) {
+	var (
+		nfd int
+		sa  unix.Sockaddr
+		ok  bool
+	)
+
+	if nfd, ok = connFd.Fd.(int); !ok {
+		err = gerrors.New(fmt.Sprintf("connFd.Fd interface {} not int type"))
+		return
+	}
+
+	if sa, ok = connFd.Sa.(unix.Sockaddr); !ok {
+		err = gerrors.New(fmt.Sprintf("connFd.Sa interface {} not unix.Sockaddr type"))
+		return
+	}
+
+	el := svr.svr.lb.next(connFd.NetAddr)
+	c = newTCPConn(nfd, el, sa, connFd.NetAddr)
+	c.SetContext(connIdx)
+	err = el.poller.Trigger(func() (err error) {
+		if err = el.poller.AddRead(nfd); err != nil {
+			_ = unix.Close(nfd)
+			c.releaseTCP()
+			return
+		}
+		el.connections[nfd] = c
+		err = el.loopOpen(c)
+		return
+	})
+	if err != nil {
+		_ = unix.Close(nfd)
+		c.releaseTCP()
+	}
+	return
 }

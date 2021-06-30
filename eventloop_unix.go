@@ -33,10 +33,10 @@ import (
 	"time"
 	"unsafe"
 
-	gerrors "github.com/panjf2000/gnet/errors"
-	"github.com/panjf2000/gnet/internal/logging"
-	"github.com/panjf2000/gnet/internal/netpoll"
-	"github.com/panjf2000/gnet/internal/socket"
+	gerrors "github.com/walkon/gnet/errors"
+	"github.com/walkon/gnet/internal/logging"
+	"github.com/walkon/gnet/internal/netpoll"
+	"github.com/walkon/gnet/internal/socket"
 	"golang.org/x/sys/unix"
 )
 

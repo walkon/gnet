@@ -27,6 +27,8 @@ package socket
 
 import (
 	"net"
+
+	"golang.org/x/sys/unix"
 )
 
 // Option is used for setting an option on socket.
@@ -48,4 +50,9 @@ func UDPSocket(proto, addr string, sockopts ...Option) (int, net.Addr, error) {
 // UnixSocket calls the internal udsSocket.
 func UnixSocket(proto, addr string, sockopts ...Option) (int, net.Addr, error) {
 	return udsSocket(proto, addr, sockopts...)
+}
+
+// TCPConnect calls the internal tcpConnect.
+func TCPConnect(proto, addr string, sockopts ...Option) (int, net.Addr, unix.Sockaddr, error) {
+	return tcpConnect(proto, addr, sockopts...)
 }

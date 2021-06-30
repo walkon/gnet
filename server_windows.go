@@ -28,8 +28,8 @@ import (
 	"sync"
 	"sync/atomic"
 
-	errors2 "github.com/panjf2000/gnet/errors"
-	"github.com/panjf2000/gnet/internal/logging"
+	errors2 "github.com/walkon/gnet/errors"
+	"github.com/walkon/gnet/internal/logging"
 )
 
 var errCloseAllConns = errors.New("close all connections in event-loop")
@@ -224,3 +224,52 @@ var channelBuffer = func() int {
 	// which makes it the best choice as the channel capacity,
 	return n
 }()
+
+func NewTCPConnFd(network, addr string, opts ...Option) (connFd *ConnFd, err error) {
+	var (
+		taddr *net.TCPAddr
+		conn  *net.TCPConn
+	)
+
+	connFd = &ConnFd{}
+	if taddr, err = net.ResolveTCPAddr(network, addr); err != nil {
+		return
+	}
+
+	if conn, err = net.DialTCP(network, nil, taddr); err != nil {
+		return
+	}
+	connFd.Fd = conn
+	return
+}
+
+func AddTCPConnector(svr *Server, connFd *ConnFd, connIdx interface{}) (c *stdConn, err error) {
+	var (
+		ok bool
+		tc *net.TCPConn
+	)
+
+	if tc, ok = connFd.Fd.(*net.TCPConn); !ok {
+		err = gerrors.New(fmt.Sprintf("connFd.Fd interface {} not net.TCPConn type"))
+		return
+	}
+
+	el := svr.svr.lb.next(tc.RemoteAddr())
+	c = newTCPConn(tc, el)
+	c.SetContext(connIdx)
+	el.ch <- c
+
+	go func() {
+		var packet [0x10000]byte
+		for {
+			n, err := c.conn.Read(packet[:])
+			if err != nil {
+				_ = c.conn.SetReadDeadline(time.Time{})
+				el.ch <- &stderr{c, err}
+				return
+			}
+			el.ch <- packTCPConn(c, packet[:n])
+		}
+	}()
+	return
+}

@@ -27,10 +27,10 @@ import (
 	"net"
 	"os"
 
-	"github.com/panjf2000/gnet/internal/socket"
-	"github.com/panjf2000/gnet/pool/bytebuffer"
-	prb "github.com/panjf2000/gnet/pool/ringbuffer"
-	"github.com/panjf2000/gnet/ringbuffer"
+	"github.com/walkon/gnet/pool/bytebuffer"
+	prb "github.com/walkon/gnet/pool/ringbuffer"
+	"github.com/walkon/gnet/ringbuffer"
+	"github.com/walkon/gnet/internal/socket"
 	"golang.org/x/sys/unix"
 )
 

@@ -25,8 +25,8 @@ package gnet
 import (
 	"runtime"
 
-	"github.com/panjf2000/gnet/internal/logging"
-	"github.com/panjf2000/gnet/internal/netpoll"
+	"github.com/walkon/gnet/internal/logging"
+	"github.com/walkon/gnet/internal/netpoll"
 )
 
 func (svr *server) activateMainReactor(lockOSThread bool) {

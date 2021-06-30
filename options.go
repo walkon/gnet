@@ -23,7 +23,7 @@ package gnet
 import (
 	"time"
 
-	"github.com/panjf2000/gnet/internal/logging"
+	"github.com/walkon/gnet/internal/logging"
 	"go.uber.org/zap/zapcore"
 )
 

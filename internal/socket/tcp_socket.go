@@ -27,7 +27,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/panjf2000/gnet/errors"
+	"github.com/walkon/gnet/errors"
 	"golang.org/x/sys/unix"
 )
 
@@ -149,6 +149,49 @@ func tcpSocket(proto, addr string, sockopts ...Option) (fd int, netAddr net.Addr
 
 	// Set backlog size to the maximum.
 	err = os.NewSyscallError("listen", unix.Listen(fd, listenerBacklogMaxSize))
+
+	return
+}
+
+func tcpConnect(proto, addr string, sockopts ...Option) (fd int, netAddr net.Addr, sockaddr unix.Sockaddr, err error) {
+	var (
+		family   int
+		ipv6only bool
+	)
+
+	if sockaddr, family, netAddr, ipv6only, err = getTCPSockaddr(proto, addr); err != nil {
+		return
+	}
+
+	if fd, err = sysBlockSocket(family, unix.SOCK_STREAM, unix.IPPROTO_TCP); err != nil {
+		err = os.NewSyscallError("socket", err)
+		return
+	}
+	defer func() {
+		if err != nil {
+			_ = unix.Close(fd)
+		}
+	}()
+
+	if family == unix.AF_INET6 && ipv6only {
+		if err = SetIPv6Only(fd, 1); err != nil {
+			return
+		}
+	}
+
+	for _, sockopt := range sockopts {
+		if err = sockopt.SetSockopt(fd, sockopt.Opt); err != nil {
+			return
+		}
+	}
+
+	if err = os.NewSyscallError("connect", unix.Connect(fd, sockaddr)); err != nil {
+		return
+	}
+
+	if err = os.NewSyscallError("fcntl nonblock", unix.SetNonblock(fd, true)); err != nil {
+		return
+	}
 
 	return
 }

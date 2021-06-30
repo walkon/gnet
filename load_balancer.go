@@ -24,7 +24,7 @@ import (
 	"hash/crc32"
 	"net"
 
-	"github.com/panjf2000/gnet/internal"
+	"github.com/walkon/gnet/internal"
 )
 
 // LoadBalancing represents the the type of load-balancing algorithm.

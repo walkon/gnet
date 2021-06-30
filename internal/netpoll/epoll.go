@@ -29,9 +29,9 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	"github.com/panjf2000/gnet/errors"
-	"github.com/panjf2000/gnet/internal/logging"
-	"github.com/panjf2000/gnet/internal/netpoll/queue"
+	"github.com/walkon/gnet/errors"
+	"github.com/walkon/gnet/internal/logging"
+	"github.com/walkon/gnet/internal/netpoll/queue"
 	"golang.org/x/sys/unix"
 )
 

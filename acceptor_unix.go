@@ -25,8 +25,8 @@ package gnet
 import (
 	"os"
 
-	"github.com/panjf2000/gnet/errors"
-	"github.com/panjf2000/gnet/internal/socket"
+	"github.com/walkon/gnet/errors"
+	"github.com/walkon/gnet/internal/socket"
 	"golang.org/x/sys/unix"
 )
 

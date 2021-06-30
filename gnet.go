@@ -28,9 +28,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/panjf2000/gnet/errors"
-	"github.com/panjf2000/gnet/internal"
-	"github.com/panjf2000/gnet/internal/logging"
+	"github.com/walkon/gnet/errors"
+	"github.com/walkon/gnet/internal"
+	"github.com/walkon/gnet/internal/logging"
 )
 
 // Action is an action that occurs after the completion of an event.
