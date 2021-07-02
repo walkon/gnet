@@ -199,6 +199,18 @@ type (
 	EventServer struct{}
 )
 
+func (es *EventServer) PollerPreInit() {
+	return
+}
+
+func (es *EventServer) PollerProc() error {
+	return
+}
+
+func (es *EventServer) PollerWaitTimeOut() int {
+	return
+}
+
 // OnInitComplete fires when the server is ready for accepting connections.
 // The parameter:server has information and various utilities.
 func (es *EventServer) OnInitComplete(svr Server) (action Action) {
