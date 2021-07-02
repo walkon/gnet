@@ -171,10 +171,12 @@ func (p *Poller) Polling(callback func(fd int, ev uint32) error) error {
 			}
 		}
 
-		if n == el.size {
-			el.expand()
-		} else if n < el.size>>1 {
-			el.shrink()
+		if n > 0 {
+			if n == el.size {
+				el.expand()
+			} else if n < el.size>>1 {
+				el.shrink()
+			}
 		}
 	}
 }
