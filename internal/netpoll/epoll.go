@@ -107,14 +107,9 @@ func (p *Poller) Polling(callback func(fd int, ev uint32) error) error {
 	el := newEventList(InitEvents)
 	var wakenUp bool
 
-	if p.init {
-		p.init()
-	}
+	p.init()
 
-	waitTimeOut = 10
-	if p.waitTimeOut {
-		waitTimeOut = p.waitTimeOut()
-	}
+	waitTimeOut := p.waitTimeOut()
 
 	// msec := -1
 	msec := waitTimeOut
@@ -149,10 +144,8 @@ func (p *Poller) Polling(callback func(fd int, ev uint32) error) error {
 			}
 		}
 
-		if p.proc {
-			if err := p.proc(); err == errors.ErrServerShutdown {
-				return err
-			}
+		if err := p.proc(); err == errors.ErrServerShutdown {
+			return err
 		}
 
 		if wakenUp {
