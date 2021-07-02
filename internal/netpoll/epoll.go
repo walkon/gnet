@@ -124,10 +124,11 @@ func (p *Poller) Polling(callback func(fd int, ev uint32) error) error {
 			if n > 0 {
 				msec = 0
 			} else if err != nil {
-				logging.Warnf("Error occurs in epoll: %v", os.NewSyscallError("epoll_wait", err))
+				logging.Warnf("Error occurs in epoll: %v, fd: %v, msec: %v", os.NewSyscallError("epoll_wait", err), p.fd, msec)
 				return err
 			}
 		}
+		// msec = 0
 
 		for i := 0; i < n; i++ {
 			if fd := int(el.events[i].Fd); fd != p.wfd {
