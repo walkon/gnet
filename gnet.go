@@ -204,11 +204,11 @@ func (es *EventServer) PollerPreInit() {
 }
 
 func (es *EventServer) PollerProc() error {
-	return
+	return nil
 }
 
 func (es *EventServer) PollerWaitTimeOut() int {
-	return
+	return 10
 }
 
 // OnInitComplete fires when the server is ready for accepting connections.
