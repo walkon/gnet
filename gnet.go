@@ -200,7 +200,6 @@ type (
 )
 
 func (es *EventServer) PollerPreInit() {
-	return
 }
 
 func (es *EventServer) PollerProc() error {
