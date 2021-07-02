@@ -74,6 +74,8 @@ func (el *eventloop) loopRun(lockOSThread bool) {
 		el.svr.loopWG.Done()
 	}()
 
+	el.eventHandler.PollerPreInit()
+
 	for v := range el.ch {
 		switch v := v.(type) {
 		case error:
@@ -91,7 +93,10 @@ func (el *eventloop) loopRun(lockOSThread bool) {
 			err = el.loopWake(v.c)
 		case func() error:
 			err = v()
+		default:
 		}
+
+		el.eventHandler.PollerProc()
 
 		if err == errors.ErrServerShutdown {
 			break

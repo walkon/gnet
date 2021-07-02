@@ -155,6 +155,10 @@ type (
 	// Each event has an Action return value that is used manage the state
 	// of the connection and server.
 	EventHandler interface {
+		PollerPreInit()
+		PollerProc() error
+		PollerWaitTimeOut() int
+
 		// OnInitComplete fires when the server is ready for accepting connections.
 		// The parameter:server has information and various utilities.
 		OnInitComplete(server Server) (action Action)

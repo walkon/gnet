@@ -116,6 +116,8 @@ func (svr *server) activateEventLoops(numEventLoop int) (err error) {
 
 		var p *netpoll.Poller
 		if p, err = netpoll.OpenPoller(); err == nil {
+			p.InitLogic(svr.eventHandler.PollerPreInit, svr.eventHandler.PollerProc, svr.eventHandler.PollerWaitTimeOut)
+
 			el := new(eventloop)
 			el.ln = l
 			el.svr = svr

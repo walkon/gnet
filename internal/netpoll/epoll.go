@@ -25,7 +25,6 @@ package netpoll
 
 import (
 	"os"
-	"runtime"
 	"sync/atomic"
 	"unsafe"
 
@@ -42,6 +41,10 @@ type Poller struct {
 	wfdBuf         []byte // wfd buffer to read packet
 	netpollWakeSig int32
 	asyncTaskQueue queue.AsyncTaskQueue
+
+	init        func()
+	proc        func() error
+	waitTimeOut func() int
 }
 
 // OpenPoller instantiates a poller.
@@ -83,6 +86,12 @@ var (
 	b        = (*(*[8]byte)(unsafe.Pointer(&u)))[:]
 )
 
+func (p *Poller) InitLogic(init func(), proc func() error, wait func() int) {
+	p.init = init
+	p.proc = proc
+	p.waitTimeOut = wait
+}
+
 // Trigger wakes up the poller blocked in waiting for network-events and runs jobs in asyncTaskQueue.
 func (p *Poller) Trigger(task queue.Task) (err error) {
 	p.asyncTaskQueue.Enqueue(task)
@@ -98,18 +107,32 @@ func (p *Poller) Polling(callback func(fd int, ev uint32) error) error {
 	el := newEventList(InitEvents)
 	var wakenUp bool
 
-	msec := -1
+	if p.init {
+		p.init()
+	}
+
+	waitTimeOut = 10
+	if p.waitTimeOut {
+		waitTimeOut = p.waitTimeOut()
+	}
+
+	// msec := -1
+	msec := waitTimeOut
 	for {
 		n, err := unix.EpollWait(p.fd, el.events, msec)
 		if n == 0 || (n < 0 && err == unix.EINTR) {
-			msec = -1
-			runtime.Gosched()
-			continue
-		} else if err != nil {
-			logging.Warnf("Error occurs in epoll: %v", os.NewSyscallError("epoll_wait", err))
-			return err
+			// msec = -1
+			msec = waitTimeOut
+			// runtime.Gosched()
+			// continue
+		} else {
+			if n > 0 {
+				msec = 0
+			} else if err != nil {
+				logging.Warnf("Error occurs in epoll: %v", os.NewSyscallError("epoll_wait", err))
+				return err
+			}
 		}
-		msec = 0
 
 		for i := 0; i < n; i++ {
 			if fd := int(el.events[i].Fd); fd != p.wfd {
@@ -123,6 +146,12 @@ func (p *Poller) Polling(callback func(fd int, ev uint32) error) error {
 			} else {
 				wakenUp = true
 				_, _ = unix.Read(p.wfd, p.wfdBuf)
+			}
+		}
+
+		if p.proc {
+			if err := p.proc(); err == errors.ErrServerShutdown {
+				return err
 			}
 		}
 
