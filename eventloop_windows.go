@@ -76,39 +76,42 @@ func (el *eventloop) loopRun(lockOSThread bool) {
 
 	el.eventHandler.PollerPreInit()
 
-    for {
-        select {
-        case vv := <- el.ch :
-            switch v := vv.(type) {
-            case error:
-                err = v
-            case *stdConn:
-                err = el.loopAccept(v)
-            case *tcpConn:
-                v.c.buffer = v.bb
-                err = el.loopRead(v.c)
-            case *udpConn:
-                err = el.loopReadUDP(v.c)
-            case *stderr:
-                err = el.loopError(v.c, v.err)
-            case wakeReq:
-                err = el.loopWake(v.c)
-            case func() error:
-                err = v()
-            default:
-            }
+	for {
+		select {
+		case vv := <-el.ch:
+			switch v := vv.(type) {
+			case error:
+				err = v
+			case *stdConn:
+				err = el.loopAccept(v)
+			case *tcpConn:
+				v.c.buffer = v.bb
+				err = el.loopRead(v.c)
+			case *udpConn:
+				err = el.loopReadUDP(v.c)
+			case *stderr:
+				err = el.loopError(v.c, v.err)
+			case wakeReq:
+				err = el.loopWake(v.c)
+			case func() error:
+				err = v()
+			default:
+			}
 
-            if err == errors.ErrServerShutdown {
-                break
-            } else if err != nil {
-                logging.Infof("Event-loop(%d) is exiting due to the error: %v", el.idx, err)
-            }
-        default:
-            time.Sleep(5 * time.Millisecond)
-        }
+			if err == errors.ErrServerShutdown {
+				// break
+				return
+			} else if err != nil {
+				logging.Infof("Event-loop(%d) is exiting due to the error: %v", el.idx, err)
+			}
+		default:
+			time.Sleep(5 * time.Millisecond)
+		}
 
-        el.eventHandler.PollerProc()
-    }
+		if err = el.eventHandler.PollerProc(); err == errors.ErrServerShutdown {
+			return
+		}
+	}
 }
 
 func (el *eventloop) loopAccept(c *stdConn) error {
